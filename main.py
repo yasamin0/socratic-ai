@@ -57,7 +57,7 @@ async def ask_question(question: str = Form(...)):
         category = categorize_input(question)
 
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo"
+            model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": 
                     "You are a Socratic philosopher. Normally respond with thoughtful questions, "
