@@ -26,7 +26,7 @@ with open("vectorizer.pkl", "rb") as f:
     ml_vectorizer = pickle.load(f)
 
 # OpenAI API key
-openai.api_key = os.getenv("OPENAI_API_KEY") or "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"
+openai.api_key =  "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"
 #print("🔐 API KEY LOADED:", os.getenv("OPENAI_API_KEY") is not None)
 #print("🔐 API FROM ENV:", repr(os.getenv("OPENAI_API_KEY")))
 #assert os.getenv("OPENAI_API_KEY") and os.getenv("OPENAI_API_KEY").startswith("sk-"), "API Key is missing or invalid!"
