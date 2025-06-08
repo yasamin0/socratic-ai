@@ -25,7 +25,7 @@ with open("vectorizer.pkl", "rb") as f:
 client = OpenAI(
     api_key=os.getenv("OPENAI_API_KEY"),
     project=os.getenv("OPENAI_PROJECT_ID")
-
+)
 # Chat history
 conversation_history = [
     {"role": "system", "content": "You are a Socratic philosopher. Always reply with thoughtful questions."}
