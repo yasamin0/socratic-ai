@@ -22,7 +22,7 @@ with open("vectorizer.pkl", "rb") as f:
     ml_vectorizer = pickle.load(f)
 
 # Set OpenAI API key
-openai.api_key = "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"
+openai.api_key = "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"
 
 # Chat history
 conversation_history = [
