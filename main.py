@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Form
 from fastapi.responses import HTMLResponse
-import openai
+from openai import OpenAI
 import spacy
 import os
 import pickle
@@ -25,7 +25,7 @@ with open("vectorizer.pkl", "rb") as f:
     ml_vectorizer = pickle.load(f)
 
 # OpenAI API key
-openai.api_key =  "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"
+client = OpenAI(api_key= "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")
 #print("🔐 API KEY LOADED:", os.getenv("OPENAI_API_KEY") is not None)
 #print("🔐 API FROM ENV:", repr(os.getenv("OPENAI_API_KEY")))
 #assert os.getenv("OPENAI_API_KEY") and os.getenv("OPENAI_API_KEY").startswith("sk-"), "API Key is missing or invalid!"
@@ -63,7 +63,7 @@ async def ask_question(question: str = Form(...)):
         category = categorize_input(question)
         print("User category:", category)
 
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4o",
             messages=[
                 {"role": "system", "content": 
