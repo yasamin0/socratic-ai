@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Form
 from fastapi.responses import HTMLResponse
-import openai
+from openai import OpenAI, OpenAIError
 import spacy
 import os
 import pickle
@@ -27,7 +27,7 @@ with open("vectorizer.pkl", "rb") as f:
     ml_vectorizer = pickle.load(f)
 
 # OpenAI API key
-openai.api_key = "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"
+client = OpenAI(api_key="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")
 #print("🔐 API KEY LOADED:", os.getenv("OPENAI_API_KEY") is not None)
 #print("🔐 API FROM ENV:", repr(os.getenv("OPENAI_API_KEY")))
 #assert os.getenv("OPENAI_API_KEY") and os.getenv("OPENAI_API_KEY").startswith("sk-"), "API Key is missing or invalid!"
@@ -65,18 +65,17 @@ async def ask_question(question: str = Form(...)):
         category = categorize_input(question)
         print("User category:", category)
 
-        response = openai.ChatCompletion.create(
-            model="gpt-4o-mini",
+        response = client.chat.completions.create(
+            model="gpt-4o",
             messages=[
                 {"role": "system", "content": 
                     "You are a Socratic philosopher. Normally respond with thoughtful questions, "
                     "but if the user directly asks for your perspective or explanation, "
                     "provide a brief philosophical insight first, then follow up with a question."}
-            ] + conversation_history[1:],
-            timeout=10
+            ] + conversation_history[1:]
         )
 
-        answer = response['choices'][0]['message']['content']
+        answer = response.choices[0].message.content
         conversation_history.append({
           "role": "assistant",
           "content": answer,
@@ -85,14 +84,8 @@ async def ask_question(question: str = Form(...)):
 
         return render_chat(extra_info=f"Category: {category}")
 
-    except openai.error.AuthenticationError:
-        return render_chat(error="Invalid API key.")
-    except openai.error.RateLimitError:
-        return render_chat(error="Rate limit exceeded. Try again later.")
-    except openai.error.APIConnectionError:
-        return render_chat(error="Connection error. Check your internet.")
-    except openai.error.Timeout:
-        return render_chat(error="Request timed out.")
+    except OpenAIError as e:
+        return render_chat(error="OpenAI error: " + str(e))
     except Exception as e:
         return render_chat(error=f"Unexpected error: {str(e)}")
 
