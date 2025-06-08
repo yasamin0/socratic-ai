@@ -28,6 +28,10 @@ with open("vectorizer.pkl", "rb") as f:
 
 # OpenAI API key
 openai.api_key = os.getenv("OPENAI_API_KEY")
+print("🔐 API KEY LOADED:", os.getenv("OPENAI_API_KEY") is not None)
+print("🔐 API FROM ENV:", repr(os.getenv("OPENAI_API_KEY")))
+assert os.getenv("OPENAI_API_KEY") and os.getenv("OPENAI_API_KEY").startswith("sk-"), "API Key is missing or invalid!"
+
 
 # Chat history
 conversation_history = [
@@ -187,3 +191,5 @@ async def download_chat():
             return {"error": "File not created"}
     except Exception as e:
         return {"error": f"Download failed: {str(e)}"}
+    
+    
