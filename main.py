@@ -1,21 +1,18 @@
 from fastapi import FastAPI, Form
-from fastapi.responses import HTMLResponse
-from openai import OpenAI
+from fastapi.responses import HTMLResponse, FileResponse
+import openai
 import spacy
 import os
 import pickle
 from datetime import datetime
-from fastapi.responses import FileResponse
 import subprocess
 
+# Load spaCy model
 try:
     nlp = spacy.load("en_core_web_sm")
 except OSError:
     subprocess.run(["python", "-m", "spacy", "download", "en_core_web_sm"])
     nlp = spacy.load("en_core_web_sm")
-
-# Load spaCy model
-nlp = spacy.load("en_core_web_sm")
 
 # Load ML model and vectorizer
 with open("model.pkl", "rb") as f:
@@ -24,12 +21,8 @@ with open("model.pkl", "rb") as f:
 with open("vectorizer.pkl", "rb") as f:
     ml_vectorizer = pickle.load(f)
 
-# OpenAI API key
-client = OpenAI(api_key= "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")
-#print("🔐 API KEY LOADED:", os.getenv("OPENAI_API_KEY") is not None)
-#print("🔐 API FROM ENV:", repr(os.getenv("OPENAI_API_KEY")))
-#assert os.getenv("OPENAI_API_KEY") and os.getenv("OPENAI_API_KEY").startswith("sk-"), "API Key is missing or invalid!"
-
+# Set OpenAI API key
+openai.api_key = "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"
 
 # Chat history
 conversation_history = [
@@ -42,7 +35,6 @@ def categorize_input(text):
     X = ml_vectorizer.transform([text])
     return ml_model.predict(X)[0]
 
-# Preprocess user input
 def preprocess(text):
     doc = nlp(text)
     return " ".join([token.lemma_ for token in doc if not token.is_stop])
@@ -55,35 +47,61 @@ async def form_page():
 async def ask_question(question: str = Form(...)):
     try:
         conversation_history.append({
-             "role": "user",
-             "content": question,
-             "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            "role": "user",
+            "content": question,
+            "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         })
         clean_question = preprocess(question)
         category = categorize_input(question)
-        print("User category:", category)
 
-        response = client.chat.completions.create(
-            model="gpt-4o",
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
             messages=[
                 {"role": "system", "content": 
                     "You are a Socratic philosopher. Normally respond with thoughtful questions, "
                     "but if the user directly asks for your perspective or explanation, "
-                    "provide a brief philosophical insight first, then follow up with a question."}
+                    "provide a brief philosophical insight first, then follow up with a question."
+                }
             ] + conversation_history[1:]
         )
 
-        answer = response.choices[0].message.content
+        answer = response['choices'][0]['message']['content']
         conversation_history.append({
-          "role": "assistant",
-          "content": answer,
-          "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            "role": "assistant",
+            "content": answer,
+            "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         })
 
         return render_chat(extra_info=f"Category: {category}")
-
     except Exception as e:
         return render_chat(error=f"Unexpected error: {str(e)}")
+
+@app.post("/reset", response_class=HTMLResponse)
+async def reset_chat():
+    conversation_history.clear()
+    conversation_history.append({
+        "role": "system",
+        "content": "You are a Socratic philosopher. Always reply with thoughtful questions."
+    })
+    return render_chat()
+
+@app.get("/download")
+async def download_chat():
+    filename = "chat_history.txt"
+    try:
+        with open(filename, "w", encoding="utf-8") as f:
+            for msg in conversation_history[1:]:
+                timestamp = msg.get("time", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                sender = msg["role"].upper()
+                content = msg["content"]
+                f.write(f"[{timestamp}] {sender}: {content}\n\n")
+
+        if os.path.exists(filename):
+            return FileResponse(path=filename, media_type='text/plain', filename=filename)
+        else:
+            return {"error": "File not created"}
+    except Exception as e:
+        return {"error": f"Download failed: {str(e)}"}
 
 def render_chat(error="", extra_info=""):
     chat_html = ""
