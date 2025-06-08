@@ -22,10 +22,8 @@ with open("vectorizer.pkl", "rb") as f:
     ml_vectorizer = pickle.load(f)
 
 # Set OpenAI API key
-client = OpenAI(
-   api_key="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",
-   project="proj_lA2l2nGcaG5AG0f1kBC3L3Mv"        
-)
+client = OpenAI()
+
 # Chat history
 conversation_history = [
     {"role": "system", "content": "You are a Socratic philosopher. Always reply with thoughtful questions."}
@@ -56,7 +54,7 @@ async def ask_question(question: str = Form(...)):
         clean_question = preprocess(question)
         category = categorize_input(question)
 
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4",
             messages=[
                 {"role": "system", "content": 
@@ -67,7 +65,7 @@ async def ask_question(question: str = Form(...)):
             ] + conversation_history[1:]
         )
 
-        answer = response['choices'][0]['message']['content']
+        answer = response.choices[0].message.content
         conversation_history.append({
             "role": "assistant",
             "content": answer,
