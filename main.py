@@ -1,7 +1,6 @@
 from fastapi import FastAPI, Form
 from fastapi.responses import HTMLResponse
 import openai
-from openai import error as openai_error
 import spacy
 import os
 import pickle
@@ -83,8 +82,6 @@ async def ask_question(question: str = Form(...)):
 
         return render_chat(extra_info=f"Category: {category}")
 
-    except openai_error.OpenAIError as e:
-        return render_chat(error="OpenAI error: " + str(e))
     except Exception as e:
         return render_chat(error=f"Unexpected error: {str(e)}")
 
