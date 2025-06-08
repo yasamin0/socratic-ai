@@ -22,7 +22,9 @@ with open("vectorizer.pkl", "rb") as f:
     ml_vectorizer = pickle.load(f)
 
 # Set OpenAI API key
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+client = OpenAI(
+    api_key=os.getenv("OPENAI_API_KEY"),
+    project=os.getenv("OPENAI_PROJECT_ID")
 
 # Chat history
 conversation_history = [
